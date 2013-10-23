@@ -1,0 +1,32 @@
+import Control.Applicative ((<$>))
+import Control.Concurrent (threadDelay)
+import Control.Monad.IO.Class (liftIO)
+import System.Environment
+
+import Actor
+
+factorial :: Behavior () (Int, Actor Int)
+factorial () = binder $ \(val, cust) ->
+  if (val == 0)
+    then send cust 1
+    else do
+      cont <- liftIO $ create factorialCont (val, cust)
+      self <- getSelf
+      send self (val - 1, cont)
+      factorial ()
+
+factorialCont :: Behavior (Int, Actor Int) Int
+factorialCont (val, cust) =
+  binder $ \arg -> send cust (val * arg)
+
+main :: IO ()
+main = do
+  n <- read . head <$> getArgs :: IO Int
+  fact <- create factorial ()
+  e <- create end ()
+  create (go fact e n) ()
+  threadDelay 100000
+ where
+  go fact e n () = send fact (n, e)
+  end () = binder $ \result -> do
+    liftIO $ print result
