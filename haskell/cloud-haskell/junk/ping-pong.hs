@@ -1,23 +1,21 @@
 {-# LANGUAGE TemplateHaskell, DeriveGeneric, DeriveDataTypeable #-}
 
-module PingPong where
-
-import Data.Binary
-import Data.Typeable
-import GHC.Generics
-
-import Control.Distributed.Process
-import Control.Distributed.Process.Closure
-import Control.Distributed.Process.Node
-import Control.Distributed.Process.Serializable
-
-import Node
+import Import hiding (newLocalNode)
+import Control.Distributed.Process.Node (newLocalNode)
 
 data Message = Ping ProcessId
              | Pong ProcessId
-             deriving (Typeable, Generic)
+             deriving (Typeable)
 
-instance Binary Message
+instance Binary Message where
+  put (Ping pid) = putWord8 0 >> put pid
+  put (Pong pid) = putWord8 1 >> put pid
+  get = do
+    n <- getWord8
+    case n of
+      0 -> Ping <$> get
+      1 -> Pong <$> get
+      _ -> error "Binary Message"
 
 pingServer :: Process ()
 pingServer = do
@@ -46,6 +44,7 @@ master = do
 
 main :: IO ()
 main = do
-  withLocalNode $ \node -> do
-    forkProcess node master
-    return ()
+  Right t <- createTransport "localhost" "12345" defaultTCPParameters
+  node <- newLocalNode t $ __remoteTable initRemoteTable
+  runProcess node master
+  liftIO $ threadDelay 400000
