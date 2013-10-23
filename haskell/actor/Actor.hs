@@ -5,6 +5,7 @@ module Actor
   , ActorWorld
   , Behavior
   , create
+  , createIO
   , send
   , binder
   , getSelf
@@ -30,24 +31,21 @@ newtype ActorWorld r a = ActorWorld
   , MonadReader (MailBox r)
   )
 
--- type ActorId a = ThreadId
-
 type Behavior a b = a -> ActorWorld b ()
 
 type MailBox a = TQueue a
 
-execWorld :: MailBox r -> ActorWorld r a -> IO a
-execWorld mbox world =
-  runReaderT (unWorld world) mbox
-
-emptyMailBox :: IO (MailBox a)
-emptyMailBox = newTQueueIO
-
-create :: Behavior a r -> a -> IO (Actor r)
-create bdef a = do
-  mbox <- emptyMailBox
+createIO :: Behavior a r -> a -> IO (Actor r)
+createIO bdef a = do
+  mbox <- newTQueueIO
   forkIO $ execWorld mbox $ bdef a
   return $ Actor mbox
+ where
+  execWorld mbox world =
+    runReaderT (unWorld world) mbox
+
+create :: Behavior a r -> a -> ActorWorld b (Actor r)
+create bdef = liftIO . createIO bdef
 
 send :: Actor a -> a -> ActorWorld b ()
 send actor msg = do

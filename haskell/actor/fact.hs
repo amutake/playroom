@@ -1,7 +1,7 @@
 import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
 import Control.Monad.IO.Class (liftIO)
-import System.Environment
+import System.Environment (getArgs)
 
 import Actor
 
@@ -10,7 +10,7 @@ factorial () = binder $ \(val, cust) ->
   if (val == 0)
     then send cust 1
     else do
-      cont <- liftIO $ create factorialCont (val, cust)
+      cont <- create factorialCont (val, cust)
       self <- getSelf
       send self (val - 1, cont)
       factorial ()
@@ -22,9 +22,9 @@ factorialCont (val, cust) =
 main :: IO ()
 main = do
   n <- read . head <$> getArgs :: IO Int
-  fact <- create factorial ()
-  e <- create end ()
-  create (go fact e n) ()
+  fact <- createIO factorial ()
+  e <- createIO end ()
+  createIO (go fact e n) ()
   threadDelay 100000
  where
   go fact e n () = send fact (n, e)
