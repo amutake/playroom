@@ -36,8 +36,8 @@ fact = do
       send self (n - 1, cont)
       fact
 
-main :: Int -> IO ()
-main port = do
+main' :: Int -> IO ()
+main' port = do
   backend <- initializeBackend "127.0.0.1" (show port) initRemoteTable
   node <- newLocalNode backend
   pid <- forkProcess node fact
@@ -46,3 +46,6 @@ main port = do
     send pid (5 :: Int, self)
     n :: Int <- expect
     say $ "fact 5 is " ++ show n
+
+main :: IO ()
+main = main' 12345
