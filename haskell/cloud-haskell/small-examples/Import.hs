@@ -10,6 +10,7 @@ module Import
   , module Control.Distributed.Process.Backend.SimpleLocalnet
   , module Control.Applicative
   , module Control.Concurrent
+  , module Control.Monad
   ) where
 
 import Control.Applicative
@@ -18,8 +19,9 @@ import Data.Typeable
 import GHC.Generics
 import Control.Distributed.Process
 import Control.Distributed.Process.Closure
-import Control.Distributed.Process.Node hiding (newLocalNode)
+import Control.Distributed.Process.Node
 import Control.Distributed.Process.Serializable
 import Network.Transport.TCP
-import Control.Distributed.Process.Backend.SimpleLocalnet
+import Control.Distributed.Process.Backend.SimpleLocalnet  hiding (newLocalNode)
 import Control.Concurrent hiding (newChan)
+import Control.Monad
