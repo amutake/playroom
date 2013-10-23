@@ -9,6 +9,7 @@ module Import
   , module Network.Transport.TCP
   , module Control.Distributed.Process.Backend.SimpleLocalnet
   , module Control.Applicative
+  , module Control.Concurrent
   ) where
 
 import Control.Applicative
@@ -21,3 +22,4 @@ import Control.Distributed.Process.Node hiding (newLocalNode)
 import Control.Distributed.Process.Serializable
 import Network.Transport.TCP
 import Control.Distributed.Process.Backend.SimpleLocalnet
+import Control.Concurrent hiding (newChan)
