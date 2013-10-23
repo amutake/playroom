@@ -5,7 +5,7 @@ name:                cloud-haskell
 version:             0.1.0.0
 synopsis:            Exercise of cloud-haskell
 -- description:
-homepage:            https://github.com/amutake/exercises/cloud-haskell
+homepage:            https://github.com/amutake/playroom/haskell/cloud-haskell
 license:             BSD3
 license-file:        LICENSE
 author:              amutake
