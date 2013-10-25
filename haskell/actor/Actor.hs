@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Actor
-  ( Actor
+  ( ActorId
   , ActorWorld
   , Behavior
   , create
@@ -17,7 +17,7 @@ import Control.Applicative
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 
-data Actor r = Actor
+data ActorId r = ActorId
   { mailBox :: MailBox r
   }
 
@@ -35,19 +35,19 @@ type Behavior a b = a -> ActorWorld b ()
 
 type MailBox a = TQueue a
 
-createIO :: Behavior a r -> a -> IO (Actor r)
+createIO :: Behavior a r -> a -> IO (ActorId r)
 createIO bdef a = do
   mbox <- newTQueueIO
   forkIO $ execWorld mbox $ bdef a
-  return $ Actor mbox
+  return $ ActorId mbox
  where
   execWorld mbox world =
     runReaderT (unWorld world) mbox
 
-create :: Behavior a r -> a -> ActorWorld b (Actor r)
+create :: Behavior a r -> a -> ActorWorld b (ActorId r)
 create bdef = liftIO . createIO bdef
 
-send :: Actor a -> a -> ActorWorld b ()
+send :: ActorId a -> a -> ActorWorld b ()
 send actor msg = do
   let mbox = mailBox actor
   liftIO $ atomically $ writeTQueue mbox msg
@@ -58,7 +58,7 @@ binder f = do
   msg <- liftIO $ atomically $ readTQueue mbox
   f msg
 
-getSelf :: ActorWorld r (Actor r)
+getSelf :: ActorWorld r (ActorId r)
 getSelf = do
   mbox <- ask
-  return $ Actor mbox
+  return $ ActorId mbox

@@ -5,7 +5,7 @@ import System.Environment (getArgs)
 
 import Actor
 
-factorial :: Behavior () (Int, Actor Int)
+factorial :: Behavior () (Int, ActorId Int)
 factorial () = binder $ \(val, cust) ->
   if (val == 0)
     then send cust 1
@@ -15,7 +15,7 @@ factorial () = binder $ \(val, cust) ->
       send self (val - 1, cont)
       factorial ()
 
-factorialCont :: Behavior (Int, Actor Int) Int
+factorialCont :: Behavior (Int, ActorId Int) Int
 factorialCont (val, cust) =
   binder $ \arg -> send cust (val * arg)
 
