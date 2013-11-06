@@ -8,7 +8,10 @@ module Actor
   , createIO
   , send
   , binder
+  , vectBinder
   , getSelf
+  , liftIO
+  , wait
   ) where
 
 import Control.Concurrent
@@ -58,7 +61,28 @@ binder f = do
   msg <- liftIO $ atomically $ readTQueue mbox
   f msg
 
+vectBinder :: Int -> ([r] -> ActorWorld [r] ()) -> ActorWorld [r] ()
+vectBinder n f = do
+  mbox <- ask
+  msgs <- liftIO $ atomically $ replicateM n $ readTQueue mbox
+  f $ concat msgs
+
 getSelf :: ActorWorld r (ActorId r)
 getSelf = do
   mbox <- ask
   return $ ActorId mbox
+
+wait :: Behavior a r -> a -> IO ()
+wait bdef a = do
+  tvar <- newTVarIO False
+  createIO (putKillSign tvar) ()
+  wait' tvar
+ where
+  putKillSign tvar _ = do
+    bdef a
+    liftIO $ atomically $ writeTVar tvar True
+  wait' tvar = atomically $ do
+    r <- readTVar tvar
+    case r of
+      True -> return ()
+      False -> retry
