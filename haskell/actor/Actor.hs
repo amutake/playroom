@@ -12,6 +12,7 @@ module Actor
   , getSelf
   , liftIO
   , wait
+  , expect
   ) where
 
 import Control.Concurrent
@@ -56,16 +57,13 @@ send actor msg = do
   liftIO $ atomically $ writeTQueue mbox msg
 
 binder :: (r -> ActorWorld r ()) -> ActorWorld r ()
-binder f = do
-  mbox <- ask
-  msg <- liftIO $ atomically $ readTQueue mbox
-  f msg
+binder f = expect >>= f
 
 vectBinder :: Int -> ([r] -> ActorWorld [r] ()) -> ActorWorld [r] ()
-vectBinder n f = do
-  mbox <- ask
-  msgs <- liftIO $ atomically $ replicateM n $ readTQueue mbox
-  f $ concat msgs
+vectBinder n f = replicateM n expect >>= f . concat
+
+expect :: ActorWorld r r
+expect = ask >>= liftIO . atomically . readTQueue
 
 getSelf :: ActorWorld r (ActorId r)
 getSelf = do
