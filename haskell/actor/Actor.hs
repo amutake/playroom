@@ -7,12 +7,10 @@ module Actor
   , create
   , createIO
   , send
-  , binder
-  , vectBinder
+  , receive
   , getSelf
   , liftIO
   , wait
-  , expect
   ) where
 
 import Control.Concurrent
@@ -26,13 +24,13 @@ data ActorId r = ActorId
   }
 
 newtype ActorWorld r a = ActorWorld
-  { unWorld :: ReaderT (MailBox r) IO a
+  { unWorld :: ReaderT (ActorId r) IO a
   } deriving
   ( Functor
   , Applicative
   , Monad
   , MonadIO
-  , MonadReader (MailBox r)
+  , MonadReader (ActorId r)
   )
 
 type Behavior a b = a -> ActorWorld b ()
@@ -42,7 +40,7 @@ type MailBox a = TQueue a
 createIO :: Behavior a r -> a -> IO (ActorId r)
 createIO bdef a = do
   mbox <- newTQueueIO
-  forkIO $ execWorld mbox $ bdef a
+  forkIO $ execWorld (ActorId mbox) $ bdef a
   return $ ActorId mbox
  where
   execWorld mbox world =
@@ -52,23 +50,13 @@ create :: Behavior a r -> a -> ActorWorld b (ActorId r)
 create bdef = liftIO . createIO bdef
 
 send :: ActorId a -> a -> ActorWorld b ()
-send actor msg = do
-  let mbox = mailBox actor
-  liftIO $ atomically $ writeTQueue mbox msg
+send actor = liftIO . atomically . writeTQueue (mailBox actor)
 
-binder :: (r -> ActorWorld r ()) -> ActorWorld r ()
-binder f = expect >>= f
-
-vectBinder :: Int -> ([r] -> ActorWorld [r] ()) -> ActorWorld [r] ()
-vectBinder n f = replicateM n expect >>= f . concat
-
-expect :: ActorWorld r r
-expect = ask >>= liftIO . atomically . readTQueue
+receive :: ActorWorld r r
+receive = ask >>= liftIO . atomically . readTQueue . mailBox
 
 getSelf :: ActorWorld r (ActorId r)
-getSelf = do
-  mbox <- ask
-  return $ ActorId mbox
+getSelf = ask
 
 wait :: Behavior a r -> a -> IO ()
 wait bdef a = do
