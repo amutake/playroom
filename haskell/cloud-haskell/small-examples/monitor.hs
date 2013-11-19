@@ -12,8 +12,8 @@ master 0 = return ()
 master n = do
   pid <- spawnLocal slave
   monitor pid
-  _ <- expect :: Process ProcessMonitorNotification
-  say $ show n
+  ProcessMonitorNotification _ _ reason <- expect
+  say $ show reason
   master (n - 1)
 
 main :: IO ()
