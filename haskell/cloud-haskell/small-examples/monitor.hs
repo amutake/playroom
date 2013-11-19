@@ -2,9 +2,10 @@ import Import
 
 slave :: Process ()
 slave = do
-  liftIO $ threadDelay 1000000
-  say "疲れた。。。"
-  terminate
+  liftIO $ threadDelay 500000
+  liftIO $ print (1 `div` 0)
+  say "no exeption happened"
+  slave
 
 master :: Int -> Process ()
 master 0 = return ()
@@ -12,7 +13,7 @@ master n = do
   pid <- spawnLocal slave
   monitor pid
   _ <- expect :: Process ProcessMonitorNotification
-  say $ "あと" ++ show (n - 1) ++ "回がんばれ"
+  say $ show n
   master (n - 1)
 
 main :: IO ()
@@ -20,4 +21,4 @@ main = do
   Right t <- createTransport "localhost" "12345" defaultTCPParameters
   node <- newLocalNode t initRemoteTable
   runProcess node (master 5)
-  liftIO $ threadDelay 1000000
+  liftIO $ threadDelay 1000
