@@ -5,6 +5,9 @@ import Network.Transport hiding (send)
 import System.Environment
 
 
+readNodeId :: String -> NodeId
+readNodeId = NodeId . EndPointAddress . pack
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -12,8 +15,7 @@ main = do
     ["ping", host, port, addr] -> do
       Right transport <- createTransport host port defaultTCPParameters
       localnode <- newLocalNode transport initRemoteTable
-      let nid = NodeId . EndPointAddress . pack $ addr
-      runProcess localnode (ping nid)
+      runProcess localnode (ping $ readNodeId addr)
     ["pong", host, port] -> do
       Right transport <- createTransport host port defaultTCPParameters
       localnode <- newLocalNode transport initRemoteTable
