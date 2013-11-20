@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items>
+  <item>
+    <name>Apple</name>
+    <price>100</price>
+    <quantity>30</quantity>
+  </item>
+  <item>
+    <name>Orange</name>
+    <price>80</price>
+    <quantity>20</quantity>
+  </item>
+  <item>
+    <name>Hoge</name>
+    <quantity>1</quantity>
+  </item>
+  <item>
+    <quantity>2</quantity>
+    <name>Fuga</name>
+  </item>
+</items>
