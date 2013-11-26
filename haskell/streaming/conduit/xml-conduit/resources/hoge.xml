@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<hoge>
+  <itemSet>
+    <item>
+      <a>a</a>
+      <b>b</b>
+    </item>
+    <item>
+      <b>b</b>
+      <a>a</a>
+    </item>
+    <item>
+      <a>a</a>
+      <b>b</b>
+      <c>
+        <c1>c1</c1>
+      </c>
+    </item>
+  </itemSet>
+  <id>1</id>
+</hoge>
