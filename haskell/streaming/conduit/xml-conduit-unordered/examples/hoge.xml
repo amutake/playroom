@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<hoge>
+  <fugaSet>
+    <fuga>
+      <name>fuga1</name>
+      <desc>this is fuga1</desc>
+    </fuga>
+    <fuga>
+      <desc>this is fuga2</desc>
+      <name>fuga2</name>
+    </fuga>
+    <fuga>
+      <name>fuga3</name>
+      <desc>this is fuga3 with foo</desc>
+      <foo>
+        <bar>barbar</bar>
+      </foo>
+    </fuga>
+  </fugaSet>
+  <id>1</id>
+</hoge>
