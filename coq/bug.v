@@ -1,19 +1,15 @@
 Inductive A : Set := a : A.
 
-Inductive B : Set := b : B.
-
-Definition fantom (n : nat) := A -> B.
-
-Definition const_b := fun _ : A => b.
+Definition fantom (n : nat) := A.
 
 Definition fantom_succ {n : nat} : fantom n -> fantom (S n) :=
-  fun f => const_b.
+  fun _ => a.
 
 Inductive ty : forall n : nat, fantom n -> Prop :=
-| zero : ty O const_b
+| zero : ty O a
 | succ : forall (x : nat) (f : fantom x), ty x f -> ty (S x) (fantom_succ f).
 
-Goal forall (n : nat) (f : fantom n), ty n f -> f = const_b.
+Goal forall (n : nat) (f : fantom n), ty n f -> f = a.
 Proof.
   intros.
   inversion H.
