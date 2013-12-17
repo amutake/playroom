@@ -11,13 +11,11 @@ import Control.Applicative
 import Data.Typeable
 
 import Control.Eff
+import Data.Void
 
 -- source :== a :== b :== sink
 
 -- http://d.hatena.ne.jp/hiratara/20131029/1383053821
-
--- send :: (forall w. (a -> VE w r) -> Union r (VE w r)) -> Eff r a
--- inj  :: (Functor t, Typeable1 t, Member t r) => t v -> Union r v
 
 {- Writer
 -- | The request to remember a value of type w in the current environment
@@ -59,38 +57,51 @@ modify f = send $ \k -> inj $ State f $ \_ -> k ()
 -}
 
 
-data (:==) i o v where
-  Done :: undefined
+data (:==:) i o v where
+  Done :: (:==:) i o v
+  Await :: (i -> v) -> (:==:) i o v
+  Yield :: o -> (() -> v) -> (:==:) i o v
+  deriving (Typeable, Functor)
   -- Done :: v -> (:==) i o v
   -- Yield :: o -> ((:==) i o v) -> (:==) i o v
   -- Await :: (i -> ((:==) i o v)) -> (:==) i o v
 
-type Src o = forall i. i :== o
-type Snk i = forall o. i :== o
+-- send :: (forall w. (a -> VE w r) -> Union r (VE w r)) -> Eff r a
+-- inj  :: (Functor t, Typeable1 t, Member t r) => t v -> Union r v
 
-await :: (Typeable i, Member (Snk i) r) => Eff r (Maybe i)
-await = send $ \f -> -- f :: Maybe i -> VE w r
-  inj $ Done $
+await :: forall i o r. (Typeable i, Member (i :==: o) r) => Eff r i
+await = send (inj . Await)
 
-yield :: (Typeable o, Member (Src o) r) => o -> Eff r ()
-yield o = undefined -- send (inj . Yield o)
+yield :: (Typeable o, Member (i :==: o) r) => o -> Eff r ()
+yield o = send (inj . Yield o)
 
-sourceList :: (Typeable o, Member (forall i. i :== o) r) => [o] -> Eff r ()
-sourceList = mapM_ yield
+produce :: (Typeable o, Member (() :==: o) r) => [o] -> Eff r ()
+produce = mapM_ yield
 
-consume :: (Typeable i, Member (forall o. i :== o) r) => Eff r [i]
+consume :: (Typeable i, Member (i :==: Void) r) => Eff r [i]
 consume = do
   i <- await
-  case i of
-    Just i' -> (i' :) <$> consume
-    Nothing -> return []
+  (i :) <$> consume
 
-runStream :: (Typeable i, Typeable o)
-          => Eff ((forall i'. i' :== o) :> r) ()
-          -> Eff ((forall o'. i :== o') :> r) b
-          -> Eff r b
-runStream e1 e2 = undefined
+(|==|) :: (Member (i :==: x) r1, Member (x :==: o) r2, Member (i :==: o) r)
+       => Eff r1 a
+       -> Eff r2 b
+       -> Eff r b
+e1 |==| e2 = undefined
+
+mapS :: (Typeable i, Typeable o, Member (i :==: o) r) => (i -> o) -> Eff r ()
+mapS f = await >>= yield . f
+
+runStream :: Eff ((() :==: Void) :> r) v
+          -> Eff r v
+runStream m = loop (admin m)
+  where
+    -- loop :: VE v ((() :==: Void) :> r) -> Eff r v
+    loop (Val v) = return v
+    loop (E u) = handleRelay u loop go
+    go (Await cont) = loop (cont ())
+    go (Yield o ve) = loop (ve ())
 
 main :: IO ()
 main = do
-  print $ run $ runStream (sourceList [1..10]) consume
+  print $ run $ runStream $ (produce [1..10]) |==| mapS (* 2) |==| consume
