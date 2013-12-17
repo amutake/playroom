@@ -14,7 +14,10 @@ import Control.Eff.Trace
 data Return a v = Return a (a -> v) deriving (Typeable, Functor)
 
 returnE :: (Typeable a, Member (Return a) r) => a -> Eff r a
-returnE a = send $ (inj . Return a)
+returnE a = send $ \f -> inj . Return a $ const $ f a
+
+hoge :: (Typeable a, Member (Return a) r) => a -> Eff r a
+hoge a = send $ inj . Return a
 
 runReturn :: (Typeable a) => Eff (Return a :> r) v -> Eff r v
 runReturn m = loop (admin m)
