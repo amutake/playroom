@@ -5,7 +5,13 @@
   , DeriveFunctor
   , ImpredicativeTypes
   , GADTs
+  , ExistentialQuantification
+  , PolymorphicComponents
+  , LiberalTypeSynonyms
+  , ScopedTypeVariables
   #-}
+
+module Stream where
 
 import Control.Applicative
 import Data.Typeable
@@ -13,75 +19,41 @@ import Data.Typeable
 import Control.Eff
 import Data.Void
 
--- source :== a :== b :== sink
+-- source :==: a :==: b :==: sink
 
 -- http://d.hatena.ne.jp/hiratara/20131029/1383053821
 
-{- Writer
--- | The request to remember a value of type w in the current environment
-data Writer w v = Writer w v
-    deriving (Typeable, Functor)
+data (:==:) i o v = Done v
+                  | Await (i -> (:==:) i o v)
+                  | Yield o ((:==:) i o v)
+                  deriving (Typeable, Functor)
 
--- | Write a new value.
-tell :: (Typeable w, Member (Writer w) r) => w -> Eff r ()
-tell w = send $ \f -> inj $ Writer w $ f ()
--}
-
-{- Reader
--- | The request for a value of type e from the current environment.
--- This environment is analogous to a parameter of type e.
-newtype Reader e v = Reader (e -> v)
-    deriving (Typeable, Functor)
-
--- | Get the current value from a Reader.
-ask :: (Typeable e, Member (Reader e) r) => Eff r e
-ask = send (inj . Reader)
--}
-
-{- State
--- | Strict state effect
-data State s w = State (s -> s) (s -> w)
-  deriving (Typeable, Functor)
-
--- | Write a new value of the state.
-put :: (Typeable e, Member (State e) r) => e -> Eff r ()
-put = modify . const
-
--- | Return the current value of the state.
-get :: (Typeable e, Member (State e) r) => Eff r e
-get = send (inj . State id)
-
--- | Transform the state with a function.
-modify :: (Typeable s, Member (State s) r) => (s -> s) -> Eff r ()
-modify f = send $ \k -> inj $ State f $ \_ -> k ()
--}
-
-
-data (:==:) i o v where
-  Done :: (:==:) i o v
-  Await :: (i -> v) -> (:==:) i o v
-  Yield :: o -> (() -> v) -> (:==:) i o v
-  deriving (Typeable, Functor)
-  -- Done :: v -> (:==) i o v
-  -- Yield :: o -> ((:==) i o v) -> (:==) i o v
-  -- Await :: (i -> ((:==) i o v)) -> (:==) i o v
-
+type Producer o v = forall i. (:==:) i o v
+type Consumer i v = forall o. (:==:) i o v
 -- send :: (forall w. (a -> VE w r) -> Union r (VE w r)) -> Eff r a
 -- inj  :: (Functor t, Typeable1 t, Member t r) => t v -> Union r v
 
-await :: forall i o r. (Typeable i, Member (i :==: o) r) => Eff r i
-await = send (inj . Await)
+await :: (Typeable i, Member (i :==: o) r) => Eff r i
+await = send $ inj . Await . (Done .)
+  -- send $ \f -> inj $ Await $ \i -> Done $ f i
+
+awaitMaybe :: (Typeable i, Member (i :==: o) r) => Eff r (Maybe i)
+awaitMaybe = send $ \f -> inj $ Await $ Done . f . Just
+  -- send $ \f -> inj $ Await $ \i -> Done $ f $ Just i
 
 yield :: (Typeable o, Member (i :==: o) r) => o -> Eff r ()
-yield o = send (inj . Yield o)
+yield o = send $ \f -> inj $ Yield o $ Done $ f ()
+  -- send $ \f -> inj $ Yield o $ Done $ f ()
 
-produce :: (Typeable o, Member (() :==: o) r) => [o] -> Eff r ()
+produce :: (Typeable o, Member (i :==: o) r) => [o] -> Eff r ()
 produce = mapM_ yield
 
 consume :: (Typeable i, Member (i :==: Void) r) => Eff r [i]
 consume = do
-  i <- await
-  (i :) <$> consume
+  i <- awaitMaybe
+  case i of
+    Just i' -> (i' :) <$> consume
+    Nothing -> return []
 
 (|==|) :: (Member (i :==: x) r1, Member (x :==: o) r2, Member (i :==: o) r)
        => Eff r1 a
@@ -99,9 +71,15 @@ runStream m = loop (admin m)
     -- loop :: VE v ((() :==: Void) :> r) -> Eff r v
     loop (Val v) = return v
     loop (E u) = handleRelay u loop go
-    go (Await cont) = loop (cont ())
-    go (Yield o ve) = loop (ve ())
+    go (Done ve) = loop ve
+    go (Await cont) = loop $ extract $ cont ()
+    go (Yield _ stream) = loop $ extract stream
+    -- extract :: (:==:) () o v -> v
+    extract (Done v) = v
+    extract (Await cont) = extract $ cont ()
+    extract (Yield _ stream) = extract stream
 
 main :: IO ()
 main = do
-  print $ run $ runStream $ (produce [1..10]) |==| mapS (* 2) |==| consume
+  let eff = runStream $ (produce [1..10]) |==| mapS (* 2) |==| consume :: Eff () [Int]
+  print $ run eff
