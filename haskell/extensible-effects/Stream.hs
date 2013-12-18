@@ -52,11 +52,12 @@ combine :: (Typeable x, Member (Yield x) r1, Member (Await x) r2)
         -> Eff r v'
 combine = undefined
 
-runStream :: (Typeable x)
-          => Eff (Yield x :> r) ()
-          -> Eff (Await x :> r) v
-          -> Eff r v
-runStream m1 m2 = loop (admin m1) (admin m2) -- admin m1 :: VE () (Yield x :> r), admin m2 :: VE v (Await x :> r)
+infixl 8 |==|
+(|==|) :: (Typeable x)
+       => Eff (Yield x :> r) ()
+       -> Eff (Await x :> r) v
+       -> Eff r v
+(|==|) m1 m2 = loop (admin m1) (admin m2) -- admin m1 :: VE () (Yield x :> r), admin m2 :: VE v (Await x :> r)
   where
     -- loop :: VE () ((Yield x) :> r) -> VE v ((Await x) :> r) -> Eff r v
     loop _ (Val v) = return v -- v :: v
@@ -82,9 +83,6 @@ runStream m1 m2 = loop (admin m1) (admin m2) -- admin m1 :: VE () (Yield x :> r)
     -- extract (Await cont) = extract $ cont ()
     -- extract (Yield _ stream) = extract stream
 
-(|==|) :: (Typeable x) => Eff (Yield x :> r) () -> Eff (Await x :> r) v -> Eff r v
-(|==|) = runStream
-
 {-
 admin :: Eff r w -> VE w r
 
@@ -105,5 +103,5 @@ main = do
   let src = produce ([1..10] :: [Int]) :: Eff (Yield Int :> Yield Int :> ()) ()
       con = mapS ((* 2) :: Int -> Int) :: Eff (Await Int :> Yield Int :> ()) ()
       sin = consume :: Eff (Await Int :> ()) [Int]
-      eff = run $ (src |==| con) |==| sin
+      eff = run $ src |==| con |==| sin
   print eff
