@@ -23,9 +23,9 @@ import Data.Void
 
 -- http://d.hatena.ne.jp/hiratara/20131029/1383053821
 
-data Done v = Done v
-data Await i v = Await (i -> Either (Await i v) (Done v))
-data Yield o v = Yield o (Either (Yield o v) (Done v))
+data Stop = Stop
+data Await i v = Await (i -> Either Stop (Await i v)) (Stop -> v)
+data Yield o v = Yield o (Either Stop (Yield o v))
 
 -- send :: (forall w. (a -> VE w r) -> Union r (VE w r)) -> Eff r a
 -- inj  :: (Functor t, Typeable1 t, Member t r) => t v -> Union r v
@@ -59,7 +59,7 @@ runStream m1 m2 = loop (admin m1) (admin m2)
   where
     -- loop :: VE v ((Yield x) :> r) -> VE v ((Await x) :> r) -> Eff r v
     loop _ (Val v) = return v
-    loop (Val v) (E _) = return v
+    loop (Val _) (E u) = handleRelay u loo
     loop (E u1) (E u2) = handleRelay u2 loop $ \(Await f) -> do
       handleRelay u1 loop $ \(Yield x d) ->
         loop $ extract $ f x
