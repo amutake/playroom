@@ -52,17 +52,28 @@ combine :: (Typeable x, Member (Yield x) r1, Member (Await x) r2)
         -> Eff r v'
 combine = undefined
 
-runStream :: Eff ((Yield x) :> r) v
-          -> Eff ((Await x) :> r) v
+runStream :: Eff (Yield x :> r) ()
+          -> Eff (Await x :> r) v
           -> Eff r v
-runStream m1 m2 = loop (admin m1) (admin m2)
+runStream m1 m2 = loop (admin m1) (admin m2) -- admin m1 :: VE () (Yield x :> r), admin m2 :: VE v (Await x :> r)
   where
-    -- loop :: VE v ((Yield x) :> r) -> VE v ((Await x) :> r) -> Eff r v
-    loop _ (Val v) = return v
-    loop (Val _) (E u) = handleRelay u loo
-    loop (E u1) (E u2) = handleRelay u2 loop $ \(Await f) -> do
-      handleRelay u1 loop $ \(Yield x d) ->
-        loop $ extract $ f x
+    -- loop :: VE () ((Yield x) :> r) -> VE v ((Await x) :> r) -> Eff r v
+    loop _ (Val v) = return v -- v :: v
+    loop v@(Val _) (E u) = handleRelay u (loop v) $ \(Await _ stop) -> stop Stop -- u :: Union (Await x :> r) (VE v (Await x :> r))
+    -- u1 :: Union (Yield x :> r) (VE () (Yield x :> r)), u2 :: Union (Await x :> r) (VE v (Await x :> r))
+    loop (E u1) (E u2) = handleRelay u2 (loop (E u1)) $ \(Await next stop) -> do -- next :: x -> Either Stop (Await i (VE v (Await x :> r))), stop :: Stop -> VE v (Await x :> r)
+                      -- handleRelay :: Union (Await x :> r) (VE v (Await x :> r))
+                      --             -> (VE v (Await x :> r) -> Eff r v)
+                      --             -> (Await x (VE v (Await x :> r)) -> Eff r v)
+                      --             -> Eff r v
+      handleRelay u1 (\ve -> loop ve (stop Stop)) $ \(Yield x next') -> -- x :: x, next :: Either Stop (Yield x (VE () (Yield x :> r)))
+        -- handleRelay :: Union (Yield x :> r) (VE () (Yield x :> r))
+        --             -> (VE () (Yield x :> r) -> Eff r v)
+        --             -> (Yield x (VE () (Yield x :> r)) -> Eff r v)
+        --             -> Eff r v
+        case next' of
+          Left Stop -> next x
+        loop $ extract $ f x -- :: Eff r (VE r (Yield x :> r))
 
     go (Done ve) = loop ve
     go (Await cont) = loop $ extract $ cont ()
@@ -71,6 +82,21 @@ runStream m1 m2 = loop (admin m1) (admin m2)
     extract (Done v) = v
     extract (Await cont) = extract $ cont ()
     extract (Yield _ stream) = extract stream
+
+{-
+admin :: Eff r w -> VE w r
+
+data VE w r
+  = Val w
+  | E !(Union r (VE w r))
+
+handleRelay :: Typeable1 t
+            => Union (t :> r) v
+            -> (v -> Eff r a)
+            -> (t v -> Eff r a)
+            -> Eff r a
+-}
+
 
 main :: IO ()
 main = do
