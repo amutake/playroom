@@ -23,54 +23,47 @@ import Data.Void
 
 -- http://d.hatena.ne.jp/hiratara/20131029/1383053821
 
-data (:==:) i o v = Done v
-                  | Await (i -> (:==:) i o v)
-                  | Yield o ((:==:) i o v)
-                  deriving (Typeable, Functor)
+data Done v = Done v
+data Await i v = Await (i -> Either (Await i v) (Done v))
+data Yield o v = Yield o (Either (Yield o v) (Done v))
 
-type Producer o v = forall i. (:==:) i o v
-type Consumer i v = forall o. (:==:) i o v
 -- send :: (forall w. (a -> VE w r) -> Union r (VE w r)) -> Eff r a
 -- inj  :: (Functor t, Typeable1 t, Member t r) => t v -> Union r v
 
-await :: (Typeable i, Member (i :==: o) r) => Eff r i
-await = send $ inj . Await . (Done .)
-  -- send $ \f -> inj $ Await $ \i -> Done $ f i
+await :: (Typeable i, Member (Await i) r) => Eff r (Maybe i)
+await = send $ \f -> inj $ Await $ \i -> undefined
 
-awaitMaybe :: (Typeable i, Member (i :==: o) r) => Eff r (Maybe i)
-awaitMaybe = send $ \f -> inj $ Await $ Done . f . Just
-  -- send $ \f -> inj $ Await $ \i -> Done $ f $ Just i
+yield :: (Typeable o, Member (Yield o) r) => o -> Eff r ()
+yield o = send $ \f -> inj $ Yield o $ undefined
 
-yield :: (Typeable o, Member (i :==: o) r) => o -> Eff r ()
-yield o = send $ \f -> inj $ Yield o $ Done $ f ()
-  -- send $ \f -> inj $ Yield o $ Done $ f ()
-
-produce :: (Typeable o, Member (i :==: o) r) => [o] -> Eff r ()
+produce :: (Typeable o, Member (Yield o) r) => [o] -> Eff r ()
 produce = mapM_ yield
 
-consume :: (Typeable i, Member (i :==: Void) r) => Eff r [i]
-consume = do
-  i <- awaitMaybe
-  case i of
-    Just i' -> (i' :) <$> consume
-    Nothing -> return []
+consume :: (Typeable i, Member (Await i) r) => Eff r [i]
+consume = await >>= maybe (return []) (\i -> (i :) <$> consume)
 
-(|==|) :: (Member (i :==: x) r1, Member (x :==: o) r2, Member (i :==: o) r)
-       => Eff r1 a
-       -> Eff r2 b
-       -> Eff r b
-e1 |==| e2 = undefined
+mapS :: (Typeable i, Typeable o, Member (Await i) r, Member (Yield o) r)
+     => (i -> o) -> Eff r ()
+mapS f = await >>= maybe (return ()) (yield . f)
 
-mapS :: (Typeable i, Typeable o, Member (i :==: o) r) => (i -> o) -> Eff r ()
-mapS f = await >>= yield . f
+combine :: (Typeable x, Member (Yield x) r1, Member (Await x) r2)
+        => Eff r1 v
+        -> Eff r2 v'
+        -> Eff r v'
+combine = undefined
 
-runStream :: Eff ((() :==: Void) :> r) v
+runStream :: Eff ((Yield x) :> r) v
+          -> Eff ((Await x) :> r) v
           -> Eff r v
-runStream m = loop (admin m)
+runStream m1 m2 = loop (admin m1) (admin m2)
   where
-    -- loop :: VE v ((() :==: Void) :> r) -> Eff r v
-    loop (Val v) = return v
-    loop (E u) = handleRelay u loop go
+    -- loop :: VE v ((Yield x) :> r) -> VE v ((Await x) :> r) -> Eff r v
+    loop _ (Val v) = return v
+    loop (Val v) (E _) = return v
+    loop (E u1) (E u2) = handleRelay u2 loop $ \(Await f) -> do
+      handleRelay u1 loop $ \(Yield x d) ->
+        loop $ extract $ f x
+
     go (Done ve) = loop ve
     go (Await cont) = loop $ extract $ cont ()
     go (Yield _ stream) = loop $ extract stream
@@ -81,5 +74,5 @@ runStream m = loop (admin m)
 
 main :: IO ()
 main = do
-  let eff = runStream $ (produce [1..10]) |==| mapS (* 2) |==| consume :: Eff () [Int]
+  let eff = runStream (produce [1..10]) consume
   print $ run eff
