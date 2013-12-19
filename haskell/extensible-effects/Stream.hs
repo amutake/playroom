@@ -44,7 +44,7 @@ consume = await >>= maybe (return []) (\i -> (i :) <$> consume)
 
 mapS :: (Typeable i, Typeable o, Member (Await i) r, Member (Yield o) r)
      => (i -> o) -> Eff r ()
-mapS f = await >>= maybe (return ()) (yield . f)
+mapS f = await >>= maybe (return ()) (\i -> yield (f i) >> mapS f)
 
 combine :: (Typeable x, Member (Yield x) r1, Member (Await x) r2)
         => Eff r1 v
@@ -110,12 +110,3 @@ handleRelay :: Typeable1 t
             -> (t v -> Eff r a)
             -> Eff r a
 -}
-
-
-main :: IO ()
-main = do
-  let src = produce ([1..10] :: [Int]) :: Eff (Yield Int :> ()) ()
-      con = mapS ((* 2) :: Int -> Int) :: Eff (Await Int :> Yield Int :> ()) ()
-      snk = consume :: Eff (Await Int :> ()) [Int]
-      eff = run $ src |==| con |==| snk
-  print eff
