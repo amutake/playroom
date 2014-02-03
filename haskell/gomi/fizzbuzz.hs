@@ -1,5 +1,7 @@
 {-# LANGUAGE MonadComprehensions #-}
 
+-- https://gist.github.com/tanakh/8006086 のモナド内包表記版
+
 import Data.Maybe
 import Data.Monoid
 
