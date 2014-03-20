@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -26,29 +25,28 @@ var (
 	}
 )
 
+func CrossDomain() martini.Handler {
+	return func(res http.ResponseWriter) {
+		res.Header().Add("Access-Control-Allow-Origin", "*")
+	}
+}
+
 func main() {
 	m := martini.Classic()
 	m.Use(render.Renderer())
+	m.Use(CrossDomain())
 
-	m.Get("/todos", func(res http.ResponseWriter, ren render.Render) {
-		res.Header().Add("Access-Control-Allow-Origin", "*")
+	m.Get("/todos", func(ren render.Render) {
 		ren.JSON(200, ToDoList)
 	})
 
-	m.Post("/todos", binding.Json(ToDo{}), func(todo ToDo, res http.ResponseWriter, ren render.Render) {
+	m.Post("/todos", binding.Json(ToDo{}), func(todo ToDo, ren render.Render) {
 		ToDoList = append(ToDoList, todo)
-		res.Header().Add("Access-Control-Allow-Origin", "*")
 		ren.JSON(200, todo)
 	})
 
-	m.Post("/todos/toggle", binding.Form(ToggleReq{}), func(
-		toggleReq ToggleReq,
-		res http.ResponseWriter,
-		ren render.Render,
-	) string {
+	m.Post("/todos/toggle", binding.Form(ToggleReq{}), func(toggleReq ToggleReq, ren render.Render) string {
 		id := toggleReq.Id
-		log.Print(id)
-		res.Header().Add("Access-Control-Allow-Origin", "*")
 		ToDoList[id].Done = !ToDoList[id].Done
 		return strconv.FormatBool(true)
 	})
