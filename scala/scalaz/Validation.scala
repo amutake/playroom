@@ -25,6 +25,7 @@ object ValidationExample {
 
   // ==== utility function ====
 
+  // parseInt から名前を変えた
   def parsableInt(s: String): ValidationNel[String, Int] = {
     try {
       s.toInt.successNel
@@ -45,6 +46,11 @@ object ValidationExample {
 
   def validateHogeInput(idStr: String): ValidationNel[String, HogeInput] = {
     idStr.successNel /\ parsableInt /\ natural <^> HogeInput
+
+    idStr.successNel
+      .flatMap(parsableInt)
+      .flatmap(natural)
+      .map(HogeInput)
 
     // for {
     //   id <- parsableInt(idStr)
@@ -74,7 +80,7 @@ object ValidationExample {
       case Some(s) => s.successNel /\ parsableInt /\ natural <^> (_.some)
     }
 
-    ListRange |> (offset |@| limit).apply
+    ListRange |> (offset |@| limit).apply // ApplicativeBuilder.apply を呼んでいるので
     // (offset |@| limit)(ListRange)
   }
 
