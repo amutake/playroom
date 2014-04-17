@@ -10,9 +10,11 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 import org.json4s.scalaz._
 
-import example.Validation.{Valid, JsonError, jsonError}
+import example.Validation.{Valid, JsonError, jsonError, ResultToValid, ValidWrapper, ExtractValid, ValidFunctionWrapper}
 
 object FromJson {
+
+  // json4s-scalaz を使った場合
 
   implicit def groupJSONR: JSONR[Group] =
     Group.applyJSON(field[Int]("id"), field[String]("name"))
@@ -41,7 +43,8 @@ object FromJson {
    * 4. JSON のパースに失敗したら例外を吐き、
    */
 
-  // 下は json4s-scalaz を使わないで自分で書くとしたらのやつ
+
+  // 下は json4s-scalaz を使わないバージョン
 
   def validParse(str: String): Valid[JValue] = try {
     parse(str).successNel
@@ -58,19 +61,20 @@ object FromJson {
     case x => jsonError(UnexpectedJSONError(x, classOf[JObject])).failureNel
   }
 
-  def int(json: JValue): Valid[Int] = json match {
+  def int: JValue => Valid[Int] = (json: JValue) => json match {
     case JInt(x) => x.intValue.successNel
     case x => JsonError("expected int but got " + x.toString).failureNel
   }
 
-  def option[T](validate: JValue => Valid[T])(json: JValue): Valid[Option[T]] = json match {
+  def option[T]: (JValue => Valid[T]) => JValue => Valid[Option[T]] = validate => json => json match {
     case JNothing | JNull => None.successNel
     case x => validate(x).map(some)
   }
 
   def validateListRange(json: JValue): Valid[ListRange] = {
-    val offset = validField("offset")(option(int))(json).flatMap(_.traverse(Utils.natural))
-    val limit = validField("limit")(option(int))(json).flatMap(_.traverse(Utils.natural))
+    val natOpt = option(int >=> Utils.natural)
+    val offset = validField("offset")(natOpt)(json)
+    val limit = validField("limit")(natOpt)(json)
     (offset |@| limit)(ListRange)
   }
 
@@ -131,5 +135,14 @@ object FromJson {
     println("========= validateListRange ==========")
     println(validParse(validListRange).flatMap(validateListRange))
     println(validParse(invalidListRange).flatMap(validateListRange))
+
+    val cannotParse = """
+{
+  offset: 0,
+  limit: 1
+}
+"""
+    println("======= cannotParse =======")
+    println(validParse(cannotParse).flatMap(validateListRange))
   }
 }

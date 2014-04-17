@@ -15,9 +15,11 @@ object Utils {
     }
   }
 
-  def natural(n: Int): Valid[Int] = if (n >= 0) {
-    n.successNel
-  } else {
-    ValueError(n.toString + " is not a natural number").failureNel
+  def natural: Int => Valid[Int] = { n =>
+    if (n >= 0) {
+      n.successNel
+    } else {
+      ValueError(n.toString + " is not a natural number").failureNel
+    }
   }
 }
