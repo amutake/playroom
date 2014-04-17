@@ -10,7 +10,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 import org.json4s.scalaz._
 
-import example.Validation.{Valid, jsonError}
+import example.Validation.{Valid, JsonError, jsonError}
 
 object FromJson {
 
@@ -25,9 +25,53 @@ object FromJson {
   }
   implicit def userJSONR: JSONR[User] =
     User.applyJSON(field[Int]("id"), field[String]("name"), field[NonEmptyList[Group]]("groups"))
+  implicit def listRangeJSONR: JSONR[ListRange] =
+    ListRange.applyJSON(field[Option[Int]]("offset"), field[Option[Int]]("limit"))
 
   def validateUser(str: String): Valid[User] = {
     fromJSON[User](parse(str))
+  }
+
+  /* なんだか微妙
+   * 微妙な点
+   * 1. JsonScalaz.Error のみを使うような設計になっていて拡張しづらい。
+   * 2. JsonScalaz.Error を含み他のエラーもつけたようなラッパ(ここでの Valid のような)を作り、
+   *    その型を返すようなバリデータを作っても、JSONR は Result しか使えなく、Valid は Result になれないので、JSON の方に流用できない。
+   * 3. 簡単そうなので作りなおしてもいいけど、json4s-scalaz とほとんど同じになりそう。
+   * 4. JSON のパースに失敗したら例外を吐き、
+   */
+
+  // 下は json4s-scalaz を使わないで自分で書くとしたらのやつ
+
+  def validParse(str: String): Valid[JValue] = try {
+    parse(str).successNel
+  } catch {
+    case e: Throwable => JsonError(e.toString).failureNel
+  }
+
+  def validField[T](name: String)(validate: JValue => Valid[T])(json: JValue): Valid[T] = json match {
+    case JObject(fs) =>
+      fs.find(_._1 == name)
+        .map(f => validate(f._2))
+        .orElse(validate(JNothing).fold(_ => none, x => some(x.successNel)))
+        .getOrElse(jsonError(NoSuchFieldError(name, json)).failureNel)
+    case x => jsonError(UnexpectedJSONError(x, classOf[JObject])).failureNel
+  }
+
+  def int(json: JValue): Valid[Int] = json match {
+    case JInt(x) => x.intValue.successNel
+    case x => JsonError("expected int but got " + x.toString).failureNel
+  }
+
+  def option[T](validate: JValue => Valid[T])(json: JValue): Valid[Option[T]] = json match {
+    case JNothing | JNull => None.successNel
+    case x => validate(x).map(some)
+  }
+
+  def validateListRange(json: JValue): Valid[ListRange] = {
+    val offset = validField("offset")(option(int))(json).flatMap(_.traverse(Utils.natural))
+    val limit = validField("limit")(option(int))(json).flatMap(_.traverse(Utils.natural))
+    (offset |@| limit)(ListRange)
   }
 
   def test = {
@@ -72,5 +116,20 @@ object FromJson {
     println(validateUser(validStr))
     println(validateUser(invalidStr1))
     println(validateUser(invalidStr2))
+
+    val validListRange = """
+{
+  "offset": 10,
+  "limit": null
+}
+"""
+    val invalidListRange = """
+{
+  "offset": "11"
+}
+"""
+    println("========= validateListRange ==========")
+    println(validParse(validListRange).flatMap(validateListRange))
+    println(validParse(invalidListRange).flatMap(validateListRange))
   }
 }
