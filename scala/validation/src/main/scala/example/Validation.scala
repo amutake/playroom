@@ -20,6 +20,7 @@ object Validation {
     case JsonScalaz.UncategorizedError(key, desc, args) =>
       JsonError("key: " + key + ", desc: " + desc + ", args: " + args)
   }
+  implicit def ResultToValid[T](r: JsonScalaz.Result[T]) = r.leftMap(_.map(jsonError))
 
   implicit class ValidWrapper[E, T](val v: ValidationNel[E, T]) {
     def /\ [U](f: Function[T, ValidationNel[E, U]]) = v.flatMap(f)

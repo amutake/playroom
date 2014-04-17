@@ -12,16 +12,22 @@ import org.json4s.scalaz._
 
 import example.Validation.{Valid, jsonError}
 
-
 object FromJson {
 
   implicit def groupJSONR: JSONR[Group] =
     Group.applyJSON(field[Int]("id"), field[String]("name"))
+  implicit def nelJSONR[T: JSONR]: JSONR[NonEmptyList[T]] = new JSONR[NonEmptyList[T]] {
+    def read(json: JValue) = json match {
+      case JArray(x :: xs) => (fromJSON[T](x) |@| xs.traverse(fromJSON[T]))(NonEmptyList[T])
+      case JArray(Nil) => UncategorizedError("NonEmptyList", "Array is empty", List()).failureNel
+      case x => UnexpectedJSONError(x, classOf[JArray]).failureNel
+    }
+  }
   implicit def userJSONR: JSONR[User] =
-    User.applyJSON(field[Int]("id"), field[String]("name"), field[List[Group]]("groups"))
+    User.applyJSON(field[Int]("id"), field[String]("name"), field[NonEmptyList[Group]]("groups"))
 
   def validateUser(str: String): Valid[User] = {
-    fromJSON[User](parse(str)).leftMap(_.map(jsonError))
+    fromJSON[User](parse(str))
   }
 
   def test = {
@@ -40,7 +46,15 @@ object FromJson {
 }
 """
 
-    val invalidStr = """
+    val invalidStr1 = """
+{
+  "id": 0,
+  "name": "amutake",
+  "groups": []
+}
+"""
+
+    val invalidStr2 = """
 {
   "id": 0,
   "name": null,
@@ -56,6 +70,7 @@ object FromJson {
 
     println("======= validateUser =======")
     println(validateUser(validStr))
-    println(validateUser(invalidStr))
+    println(validateUser(invalidStr1))
+    println(validateUser(invalidStr2))
   }
 }
