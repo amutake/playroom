@@ -24,6 +24,7 @@ object Validation {
 
   implicit class ValidWrapper[E, T](val v: ValidationNel[E, T]) {
     def /\[U](f: Function[T, ValidationNel[E, U]]) = v.flatMap(f)
+    def >>=[U](f: Function[T, ValidationNel[E, U]]) = v.flatMap(f)
     def <^>[U](f: Function[T, U]) = v.map(f)
   }
   implicit def ExtractValid[E, T](v: ValidWrapper[E, T]) = v.v
@@ -34,8 +35,8 @@ object Validation {
     }
   }
 
-  // implicit class Pipe[A](x: A) {
-  //   def |> [B](f: Function[A, B]) = f.apply(x)
-  // }
+  implicit class Pipe[A](x: A) {
+    def |> [B](f: A => B) = f(x)
+  }
 
 }

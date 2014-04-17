@@ -14,6 +14,8 @@ object FromString {
   def validateNat(str: String): Valid[Nat] = {
     str.successNel /\ parsableInt /\ natural <^> Nat
 
+    // str |> parsableInt _ /\ natural <^> Nat
+
     // or
 
     // str.successNel
@@ -27,6 +29,13 @@ object FromString {
     //   n <- parsableInt(str)
     //   n <- natural(n)
     // } yield Nat(n)
+
+    // or
+
+    // for {
+    //   n <- (parsableInt _ >=> natural)(str)
+    // } yield Nat(n)
+
   }
 
   def validateListRange(offsetStr: Option[String], limitStr: Option[String]): Valid[ListRange] = {

@@ -34,13 +34,14 @@ object FromJson {
     fromJSON[User](parse(str))
   }
 
-  /* なんだか微妙
+  /* これはなんだか微妙
    * 微妙な点
    * 1. JsonScalaz.Error のみを使うような設計になっていて拡張しづらい。
    * 2. JsonScalaz.Error を含み他のエラーもつけたようなラッパ(ここでの Valid のような)を作り、
    *    その型を返すようなバリデータを作っても、JSONR は Result しか使えなく、Valid は Result になれないので、JSON の方に流用できない。
    * 3. 簡単そうなので作りなおしてもいいけど、json4s-scalaz とほとんど同じになりそう。
-   * 4. JSON のパースに失敗したら例外を吐き、
+   * 4. JSON のパースに失敗したら例外を吐く
+   * 5. implicit hell
    */
 
 
@@ -61,18 +62,18 @@ object FromJson {
     case x => jsonError(UnexpectedJSONError(x, classOf[JObject])).failureNel
   }
 
-  def int: JValue => Valid[Int] = (json: JValue) => json match {
+  def int(json: JValue): Valid[Int] = json match {
     case JInt(x) => x.intValue.successNel
     case x => JsonError("expected int but got " + x.toString).failureNel
   }
 
-  def option[T]: (JValue => Valid[T]) => JValue => Valid[Option[T]] = validate => json => json match {
+  def option[T](validate: JValue => Valid[T])(json: JValue): Valid[Option[T]] = json match {
     case JNothing | JNull => None.successNel
     case x => validate(x).map(some)
   }
 
   def validateListRange(json: JValue): Valid[ListRange] = {
-    val natOpt = option(int >=> Utils.natural)
+    def natOpt = option(int _ >=> Utils.natural) _
     val offset = validField("offset")(natOpt)(json)
     val limit = validField("limit")(natOpt)(json)
     (offset |@| limit)(ListRange)

@@ -7,7 +7,7 @@ object Utils {
 
   import Validation._
 
-  def parsableInt(s: String): Valid[Int] = {
+  val parsableInt: String => Valid[Int] = { s =>
     try {
       s.toInt.successNel
     } catch {
@@ -15,11 +15,9 @@ object Utils {
     }
   }
 
-  def natural: Int => Valid[Int] = { n =>
-    if (n >= 0) {
-      n.successNel
-    } else {
-      ValueError(n.toString + " is not a natural number").failureNel
-    }
+  val natural: Int => Valid[Int] = n => if (n >= 0) {
+    n.successNel
+  } else {
+    ValueError(n.toString + " is not a natural number").failureNel
   }
 }
