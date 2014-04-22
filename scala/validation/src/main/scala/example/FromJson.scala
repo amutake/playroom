@@ -54,29 +54,29 @@ object FromJson {
   }
 
   def validField[T](name: String)(validate: JValue => Valid[T])(json: JValue): Valid[T] = json match {
-    case JObject(fs) =>
-      fs.find(_._1 == name)
-        .map(f => validate(f._2))
+    case JObject(fields) =>
+      fields.find(_._1 == name)
+        .map(field => validate(field._2))
         .orElse(validate(JNothing).fold(_ => none, x => some(x.successNel)))
         .getOrElse(jsonError(NoSuchFieldError(name, json)).failureNel)
     case x => jsonError(UnexpectedJSONError(x, classOf[JObject])).failureNel
   }
 
-  def int(json: JValue): Valid[Int] = json match {
-    case JInt(x) => x.intValue.successNel
+  def int: JValue => Valid[Int] = {
+    case JInt(x) => x.intValue.successNel // intValue : BigInt -> Int
     case x => JsonError("expected int but got " + x.toString).failureNel
   }
 
-  def option[T](validate: JValue => Valid[T])(json: JValue): Valid[Option[T]] = json match {
+  def option[T](validate: JValue => Valid[T]): JValue => Valid[Option[T]] = {
     case JNothing | JNull => None.successNel
     case x => validate(x).map(some)
   }
 
   def validateListRange(json: JValue): Valid[ListRange] = {
-    def natOpt = option(int _ >=> Utils.natural) _
+    def natOpt = option(int >=> Utils.natural)
     val offset = validField("offset")(natOpt)(json)
     val limit = validField("limit")(natOpt)(json)
-    (offset |@| limit)(ListRange)
+    ListRange |> (offset |@| limit).apply
   }
 
   def test = {
@@ -133,6 +133,7 @@ object FromJson {
   "offset": "11"
 }
 """
+
     println("========= validateListRange ==========")
     println(validParse(validListRange).flatMap(validateListRange))
     println(validParse(invalidListRange).flatMap(validateListRange))
