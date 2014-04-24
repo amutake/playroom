@@ -32,7 +32,7 @@ parseObject :: TokenParsing m => m Body
 parseObject = braces $ Object <$> many parseField
 
 parseField :: TokenParsing m => m Field
-parseField = token $ Field <$> (parseIdent <* symbol ":") <*> parseName
+parseField = token $ Field <$> many parseDesc <*> (parseIdent <* symbol ":") <*> parseName
 
 parseChoice :: TokenParsing m => m Body
 parseChoice = Choice <$> parseName `sepBy1` symbol "|"

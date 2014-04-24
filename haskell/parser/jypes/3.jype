@@ -1,0 +1,19 @@
+# this
+# is
+
+# tree
+tree[a] = {
+  # this is root
+
+  root: a
+
+  # this is forest
+
+  # too
+  forest: forest[a]
+}
+
+# this
+# is forest
+
+forest[a] = array[tree[a]]

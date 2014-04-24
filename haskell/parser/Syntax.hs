@@ -30,7 +30,8 @@ instance Show Body where
     show (Object fields) = "{\n" ++ intercalate "\n" (map show fields) ++ "\n}"
     show (Choice names) = intercalate " | " $ map show names
 
-data Field = Field String Name deriving (Eq)
+data Field = Field [String] String Name deriving (Eq)
 
 instance Show Field where
-    show (Field key typ) = "  " ++ key ++ ": " ++ show typ
+    show (Field [] key typ) = "  " ++ key ++ ": " ++ show typ
+    show (Field descs key typ) = unlines (map ("  # " ++) descs) ++ "  " ++ key ++ ": " ++ show typ
