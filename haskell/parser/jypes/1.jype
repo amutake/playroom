@@ -1,0 +1,6 @@
+tree[a] = {
+  root: a
+  forest: forest[a]
+}
+
+forest[a] = array[tree[a]]
