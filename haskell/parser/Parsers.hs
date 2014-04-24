@@ -12,10 +12,10 @@ parseDecls :: TokenParsing m => m [Decl]
 parseDecls = many parseDecl
 
 parseDecl :: TokenParsing m => m Decl
-parseDecl = Decl <$> many parseDesc <*> (parseName <* symbol "=") <*> parseBody
+parseDecl = Decl <$> many (token parseDesc) <*> (parseName <* symbol "=") <*> parseBody
 
 parseDesc :: TokenParsing m => m String
-parseDesc = token $ char '#' *> many (oneOf " \t") *> many (noneOf "\n") <* newline
+parseDesc = char '#' *> many (oneOf " \t") *> many (noneOf "\n") <* newline
 
 parseName :: TokenParsing m => m Name
 parseName = Name <$> parseIdent <*> (asum <$> optional parseParams)
@@ -32,7 +32,11 @@ parseObject :: TokenParsing m => m Body
 parseObject = braces $ Object <$> many parseField
 
 parseField :: TokenParsing m => m Field
-parseField = token $ Field <$> many parseDesc <*> (parseIdent <* symbol ":") <*> parseName
+parseField = token $ Field
+    <$> many (token parseDesc)
+    <*> (parseIdent <* symbol ":")
+    <*> parseName
+    <*> optional (many (oneOf " \t") *> parseDesc)
 
 parseChoice :: TokenParsing m => m Body
 parseChoice = Choice <$> parseName `sepBy1` symbol "|"
