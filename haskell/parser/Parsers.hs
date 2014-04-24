@@ -20,7 +20,7 @@ parseName = Name <$> parseIdent <*> (asum <$> optional parseParams)
     parseParams = brackets $ parseName `sepBy` symbol ","
 
 parseIdent :: TokenParsing m => m String
-parseIdent = (:) <$> letter <*> many alphaNum
+parseIdent = (:) <$> letter <*> many alphaNum <?> "identifier"
 
 parseBody :: TokenParsing m => m Body
 parseBody = parseObject <|> parseChoice
@@ -29,7 +29,7 @@ parseObject :: TokenParsing m => m Body
 parseObject = braces $ Object <$> many parseField
 
 parseField :: TokenParsing m => m Field
-parseField = Field <$> (parseIdent <* symbol ":") <*> parseName
+parseField = token $ Field <$> (parseIdent <* symbol ":") <*> parseName
 
 parseChoice :: TokenParsing m => m Body
 parseChoice = Choice <$> parseName `sepBy1` symbol "|"
