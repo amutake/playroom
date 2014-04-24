@@ -1,0 +1,25 @@
+# this
+# is
+
+# tree
+tree[a] = {
+  # this is root
+
+  root: a # this is root
+
+  # this is forest
+
+  # too
+  forest: forest[a] # this is forest
+}
+
+# this
+# is forest
+
+forest[a] = array[tree[a]]
+
+either[a, b] =
+  # left
+  | a # left
+  # right
+  | b # right

@@ -1,6 +1,7 @@
 module Syntax where
 
 import Data.List
+import Data.Maybe
 
 {-
 
@@ -39,19 +40,20 @@ instance Show Field where
         , maybe "" (" # " ++) desc
         ]
 
-data Choice = TypeChoice [String] Name deriving (Eq)
+data Choice = TypeChoice [String] Name (Maybe String) deriving (Eq)
 
 instance Show Choice where
-    show (TypeChoice [] name) = show name
-    show (TypeChoice descs name) = concat
+    show (TypeChoice [] name Nothing) = show name
+    show (TypeChoice descs name desc) = concat
         [ unlines (map ("  # " ++) descs)
         , "  | " ++ show name
+        , maybe "" (" # " ++) desc
         ]
 
 showChoices :: [Choice] -> String
 showChoices choices
-    | all (\(TypeChoice descs _) -> null descs) choices = intercalate " | " (map show choices)
+    | all (\(TypeChoice descs _ desc) -> null descs && isNothing desc) choices = intercalate " | " (map show choices)
     | otherwise = "\n" ++ unlines (map showChoiceWithDesc choices)
   where
-    showChoiceWithDesc (TypeChoice [] name) = "  | " ++ show name
+    showChoiceWithDesc (TypeChoice [] name desc) = "  | " ++ show name ++ maybe "" (" # " ++) desc
     showChoiceWithDesc choice = show choice

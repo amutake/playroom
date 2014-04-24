@@ -44,6 +44,8 @@ parseChoices = Choice <$> ((:) <$> parseChoiceH <*> many parseChoiceT)
     parseChoiceH = token $ TypeChoice
         <$> many (token parseDesc)
         <*> (optional (symbol "|") *> parseName)
+        <*> optional (many (oneOf " \t") *> parseDesc)
     parseChoiceT = token $ TypeChoice
         <$> many (token parseDesc)
         <*> (symbol "|" *> parseName)
+        <*> optional (many (oneOf " \t") *> parseDesc)
