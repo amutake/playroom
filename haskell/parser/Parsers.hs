@@ -26,7 +26,7 @@ parseIdent :: TokenParsing m => m String
 parseIdent = (:) <$> letter <*> many alphaNum <?> "identifier"
 
 parseBody :: TokenParsing m => m Body
-parseBody = parseObject <|> parseChoice
+parseBody = parseObject <|> parseChoices
 
 parseObject :: TokenParsing m => m Body
 parseObject = braces $ Object <$> many parseField
@@ -38,5 +38,12 @@ parseField = token $ Field
     <*> parseName
     <*> optional (many (oneOf " \t") *> parseDesc)
 
-parseChoice :: TokenParsing m => m Body
-parseChoice = Choice <$> parseName `sepBy1` symbol "|"
+parseChoices :: TokenParsing m => m Body
+parseChoices = Choice <$> ((:) <$> parseChoiceH <*> many parseChoiceT)
+  where
+    parseChoiceH = token $ TypeChoice
+        <$> many (token parseDesc)
+        <*> (optional (symbol "|") *> parseName)
+    parseChoiceT = token $ TypeChoice
+        <$> many (token parseDesc)
+        <*> (symbol "|" *> parseName)
