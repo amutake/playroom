@@ -12,7 +12,10 @@ parseDecls :: TokenParsing m => m [Decl]
 parseDecls = many parseDecl
 
 parseDecl :: TokenParsing m => m Decl
-parseDecl = Decl <$> (parseName <* symbol "=") <*> parseBody
+parseDecl = Decl <$> many parseDesc <*> (parseName <* symbol "=") <*> parseBody
+
+parseDesc :: TokenParsing m => m String
+parseDesc = token $ char '#' *> many (oneOf " \t") *> many (noneOf "\n") <* newline
 
 parseName :: TokenParsing m => m Name
 parseName = Name <$> parseIdent <*> (asum <$> optional parseParams)

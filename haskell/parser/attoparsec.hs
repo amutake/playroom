@@ -1,11 +1,15 @@
 module Main where
 
+import Control.Monad
 import Data.Attoparsec
 import qualified Data.ByteString as B
 
 import Parsers
+import Util
 
 main :: IO ()
 main = do
-    bs <- B.readFile "jypes/1.jype"
-    parseTest parseDecls bs
+    paths <- getFiles
+    forM_ paths $ \path -> do
+      bs <- B.readFile $ "jypes/" ++ path
+      parseTest parseDecls bs

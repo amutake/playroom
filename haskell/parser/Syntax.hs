@@ -13,14 +13,15 @@ forest[a] = array[tree[a]]
 
 -}
 
-data Decl = Decl Name Body deriving (Eq)
+data Decl = Decl [String] Name Body deriving (Eq)
 
 instance Show Decl where
-    show (Decl name body) = show name ++ " = " ++ show body
+    show (Decl descs name body) = unlines (map ("# " ++) descs) ++ show name ++ " = " ++ show body
 
 data Name = Name String [Name] deriving (Eq)
 
 instance Show Name where
+    show (Name constr []) = constr
     show (Name constr params) = constr ++ "[" ++ intercalate ", " (map show params) ++ "]"
 
 data Body = Object [Field] | Choice [Name] deriving (Eq)
@@ -32,4 +33,4 @@ instance Show Body where
 data Field = Field String Name deriving (Eq)
 
 instance Show Field where
-    show (Field key typ) = key ++ ": " ++ show typ
+    show (Field key typ) = "  " ++ key ++ ": " ++ show typ
