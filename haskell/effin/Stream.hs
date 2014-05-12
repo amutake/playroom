@@ -6,6 +6,7 @@ import Prelude hiding (log)
 
 import Control.Applicative
 import Control.Monad.Effect
+import Control.Effect.Lift
 
 import Debug.Trace
 
@@ -57,12 +58,11 @@ runStream y a = handle return awaitHandler a
 
 example :: IO ()
 example = do
-    putStrLn $ runEffect $ runStream producer consumer
+    runLift $ runStream producer consumer
   where
     producer = do
         yield "hoge"
         yield "fuga"
     consumer = do
-        Just hoge <- await
-        Just fuga <- await
-        return $ hoge ++ fuga
+        awaitForever $ \str -> do
+            lift $ putStrLn str
