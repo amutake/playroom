@@ -16,11 +16,13 @@ state :: (EffectState s es) => (s -> (a, s)) -> Effect es a
 state = send . State
 
 runState :: s -> Effect (State s ': es) a -> Effect es (a, s)
-runState = flip $
-    handle (\x s -> return (x, s))
-    $ eliminate (\(State k) s -> let (k', s') = k s in k' s')
+runState = flip $ handle point
+    $ eliminate stateHandler
     $ relay stateRelay
   where
+    point x s = return (x, s)
+    stateHandler :: State s (s -> Effect es (a, s)) -> s -> Effect es (a, s)
+    stateHandler (State k) s = let (k', s') = k s in k' s'
     stateRelay :: Member e es => e (s -> Effect es (a, s)) -> s -> Effect es (a, s)
     stateRelay x s = sendEffect $ fmap ($ s) x
 
