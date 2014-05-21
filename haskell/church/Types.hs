@@ -2,6 +2,8 @@
 
 module Types where
 
+import Data.List
+
 class ChurchEncoding a b where -- a is church encoding of b
     fromChurch :: a -> b
     toChurch :: b -> a
@@ -17,10 +19,7 @@ succ' n = ChurchNat $ \z s -> s (unChurchNat n z s)
 
 instance Integral n => ChurchEncoding ChurchNat n where
     fromChurch n = unChurchNat n 0 succ
-    toChurch n
-        | n < 0 = error "must be a positive number"
-        | n == 0 = zero
-        | otherwise = succ' $ toChurch $ pred n
+    toChurch n = iterate succ' zero `genericIndex` n
 
 data ChurchList a = ChurchList { unChurchList :: forall e. e -> (a -> e -> e) -> e }
 
@@ -34,3 +33,20 @@ instance ChurchEncoding (ChurchList a) [a] where
     fromChurch xs = unChurchList xs [] (:)
     toChurch [] = nil
     toChurch (x:xs) = cons x (toChurch xs)
+
+data ChurchBool = ChurchBool { unChurchBool :: forall e. e -> e -> e }
+
+ifThenElse :: ChurchBool -> a -> a -> a
+ifThenElse c t f = unChurchBool c t f
+
+true :: ChurchBool
+true = ChurchBool const
+
+false :: ChurchBool
+false = ChurchBool $ \_ f -> f
+
+instance ChurchEncoding ChurchBool Bool where
+    fromChurch b = unChurchBool b True False
+    toChurch b
+        | b = true
+        | otherwise = false

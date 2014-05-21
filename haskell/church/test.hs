@@ -22,3 +22,11 @@ testList = smallCheck 5 $ \xs -> xs == (from . to) xs
     to = toChurch
     from :: ChurchList Int -> [Int]
     from = fromChurch
+
+testBool :: IO ()
+testBool = smallCheck 5 $ \b -> b == (from . to) b
+  where
+    to :: Bool -> ChurchBool
+    to = toChurch
+    from :: ChurchBool -> Bool
+    from = fromChurch
