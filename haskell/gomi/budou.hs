@@ -1,9 +1,8 @@
 module Main where
 
+import System.Environment
 import Control.Monad
 import Data.List
-
-import Debug.Trace
 
 newtype Budou = Budou [[Int]]
 
@@ -43,4 +42,5 @@ calc n = calc' [1..(sum [1..n])]
 
 main :: IO ()
 main = do
-    mapM_ print $ calc 5
+    [n] <- getArgs
+    mapM_ print $ calc $ read n
