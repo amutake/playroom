@@ -6,36 +6,37 @@ object RingBenchmarks {
 
   sealed trait Msg
   case class Start(n: Int, t: Int) extends Msg
-  case class First(first: ActorRef) extends Msg
+  case class Next(next: ActorRef) extends Msg
 
   class MasterActor extends Actor {
     def receive = {
       case Start(n, t) => {
-        val (rootId, firstId) = makeRing(n, t)
-        rootId ! First(firstId)
+        val rootId = makeRing(n, t)
+        rootId ! ()
       }
     }
 
-    def makeRing(n: Int, t: Int): (ActorRef, ActorRef) = { // return value: (the address of the root actor, the address of the next actor of root actor)
-      val rootId = context.actorOf(Props(classOf[RootActor], t))
-      var next = rootId
-      val nodeIds = 1 to n map { _ =>
-        next = context.actorOf(Props(classOf[NodeActor], next))
+    def makeRing(n: Int, t: Int): ActorRef = { // return value: (he address of the root actor
+      val rootId = context.actorOf(Props(classOf[RootActor], t), "root")
+      val nodeIds = 1 to n map { num =>
+        context.actorOf(Props[NodeActor], "node" ++ num.toString)
       }
-      (rootId, next)
+      (rootId +: nodeIds) zip (nodeIds :+ rootId) map { case (id1, id2) =>
+        id1 ! Next(id2)
+      }
+      rootId
     }
   }
 
-  class RootActor(val init: Int) extends Actor {
+  class RootActor(val init: Int) extends Actor with ActorLogging {
     def receive = {
-      case First(first) => {
-        first ! ()
-        context.become(behavior(init - 1, first))
-      }
+      case Next(next) => context.become(behavior(init, next))
     }
     def behavior(n: Int, next: ActorRef): Receive = {
       case () => {
+        log.info(s"n: $n")
         if (n == 0) {
+          Thread.sleep(100)
           context.system.shutdown()
         } else {
           next ! ()
@@ -45,9 +46,15 @@ object RingBenchmarks {
     }
   }
 
-  class NodeActor(val next: ActorRef) extends Actor {
+  class NodeActor extends Actor with ActorLogging {
     def receive = {
-      case () => next ! ()
+      case Next(next) => context.become(behavior(next))
+    }
+    def behavior(next: ActorRef): Receive = {
+      case () => {
+        log.info(s"${self.path.name} received a message")
+        next ! ()
+      }
     }
   }
 
