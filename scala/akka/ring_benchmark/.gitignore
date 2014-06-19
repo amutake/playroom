@@ -1,0 +1,5 @@
+*.dump
+*.hi
+*.o
+*.beam
+ring_benchmarks
