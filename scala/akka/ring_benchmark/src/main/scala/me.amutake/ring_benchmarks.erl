@@ -4,44 +4,40 @@
 start(N, T) ->
     Self = self(),
     RootId = spawn(fun() -> ring_root(Self, T) end),
-    NodeIds = replicate_process(N, fun ring_node/0),
-    RootId ! lists:append(NodeIds, [RootId]),
+    NodeIds = create_nodes(N - 1),
+    lists:map(fun({Id1, Id2}) -> Id1 ! {next, Id2} end, lists:zip([RootId|NodeIds], lists:append(NodeIds, [RootId]))),
     RootId ! ok,
     receive
         ok -> io:write(ok)
     end.
 
-replicate_process(0, _) -> [];
-replicate_process(N, Fun) ->
-    [spawn(fun() -> Fun() end)|replicate_process(N - 1, Fun)].
+create_nodes(0) -> [];
+create_nodes(N) ->
+    [spawn(fun() -> ring_node() end)|create_nodes(N - 1)].
 
-ring_root(Mid, Times) ->
+ring_root(Master, Times) ->
     receive
-        [Pid|Pids] ->
-            Pid ! Pids,
-            receive
-                [] -> root_loop(Mid, Pid, Times)
-            end
+        {next, Next} ->
+            root_loop(Master, Next, Times)
     end.
 
-root_loop(Mid, _, 0) -> Mid ! ok;
-root_loop(Mid, Pid, Times) ->
+root_loop(Master, _, 0) -> Master ! ok;
+root_loop(Master, Next, Times) ->
     receive
         ok ->
-            Pid ! ok,
-            root_loop(Mid, Pid, Times - 1)
+            Next ! ok,
+            root_loop(Master, Next, Times - 1)
     end.
 
 ring_node() ->
     receive
-        [Pid|Pids] ->
-            Pid ! Pids,
-            node_loop(Pid)
+        {next, Next} ->
+            node_loop(Next)
     end.
 
-node_loop(Pid) ->
+node_loop(Next) ->
     receive
         ok ->
-            Pid ! ok,
-            node_loop(Pid)
+            Next ! ok,
+            node_loop(Next)
     end.

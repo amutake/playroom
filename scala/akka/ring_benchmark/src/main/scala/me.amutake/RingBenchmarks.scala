@@ -16,13 +16,14 @@ object RingBenchmarks {
         rootId ! ()
       }
       case End => {
+        println("finish")
         context.system.shutdown
       }
     }
 
     def makeRing(n: Int, t: Int): ActorRef = { // return value: the address of the root actor
       val rootId = context.actorOf(Props(classOf[RootActor], t, self), "root")
-      val nodeIds = 1 to n map { num =>
+      val nodeIds = 1 to (n - 1) map { num =>
         context.actorOf(Props[NodeActor], "node" ++ num.toString)
       }
       (rootId +: nodeIds) zip (nodeIds :+ rootId) map { case (id1, id2) =>
