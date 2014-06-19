@@ -7,6 +7,7 @@ object RingBenchmarks {
   sealed trait Msg
   case class Start(n: Int, t: Int) extends Msg
   case class Next(next: ActorRef) extends Msg
+  case object End extends Msg
 
   class MasterActor extends Actor {
     def receive = {
@@ -14,10 +15,13 @@ object RingBenchmarks {
         val rootId = makeRing(n, t)
         rootId ! ()
       }
+      case End => {
+        context.system.shutdown
+      }
     }
 
-    def makeRing(n: Int, t: Int): ActorRef = { // return value: (he address of the root actor
-      val rootId = context.actorOf(Props(classOf[RootActor], t), "root")
+    def makeRing(n: Int, t: Int): ActorRef = { // return value: the address of the root actor
+      val rootId = context.actorOf(Props(classOf[RootActor], t, self), "root")
       val nodeIds = 1 to n map { num =>
         context.actorOf(Props[NodeActor], "node" ++ num.toString)
       }
@@ -28,16 +32,14 @@ object RingBenchmarks {
     }
   }
 
-  class RootActor(val init: Int) extends Actor with ActorLogging {
+  class RootActor(val init: Int, val master: ActorRef) extends Actor {
     def receive = {
       case Next(next) => context.become(behavior(init, next))
     }
     def behavior(n: Int, next: ActorRef): Receive = {
       case () => {
-        log.info(s"n: $n")
         if (n == 0) {
-          Thread.sleep(100)
-          context.system.shutdown()
+          master ! End
         } else {
           next ! ()
           context.become(behavior(n - 1, next))
@@ -46,13 +48,12 @@ object RingBenchmarks {
     }
   }
 
-  class NodeActor extends Actor with ActorLogging {
+  class NodeActor extends Actor {
     def receive = {
       case Next(next) => context.become(behavior(next))
     }
     def behavior(next: ActorRef): Receive = {
       case () => {
-        log.info(s"${self.path.name} received a message")
         next ! ()
       }
     }
