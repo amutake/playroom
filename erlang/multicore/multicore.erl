@@ -5,11 +5,11 @@ start() ->
     A = spawn(fun() -> loop() end),
     B = spawn(fun() -> loop() end),
     C = spawn(fun() -> loop() end),
-    D = spawn(fun() -> loop() end),
+    % D = spawn(fun() -> loop() end),
     A ! go,
     B ! go,
     C ! go,
-    D ! go,
+    % D ! go,
     receive
         ok -> ok
     end.
