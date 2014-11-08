@@ -1,0 +1,21 @@
+{
+  "name": "hoge",
+  "version": "0.0.0",
+  "homepage": "https://github.com/amutake/playroom",
+  "authors": [
+    "amutake <amutake.s@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "vue": "~0.10.6",
+    "react": "~0.11.2"
+  }
+}
