@@ -1,0 +1,9 @@
+module 'map2' ['map'/2] attributes []
+
+'map'/2 = fun (F, L) ->
+  case L of
+    [] when 'true' -> []
+    [H | T] when 'true' -> [apply F(H) | apply 'map'/2(F, T)]
+  end
+
+end

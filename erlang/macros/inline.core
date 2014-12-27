@@ -1,0 +1,109 @@
+module 'inline' ['hoge'/1,
+		 'module_info'/0,
+		 'module_info'/1]
+    attributes []
+'behv'/0 =
+    %% Line 6
+    fun () ->
+	%% Line 7
+	receive
+	  %% Line 8
+	  <{'hoge',N}> when 'true' ->
+	      ( receive
+		  ( <( {( 'hoge'
+			  -| ['compiler_generated'] ),( N
+							-| ['compiler_generated'] )}
+		       -| ['compiler_generated'] )> when ( 'true'
+							   -| ['compiler_generated'] ) ->
+			%% Line 9
+			( apply ( 'behv'/0
+				  -| ['compiler_generated'] )
+			      ()
+			  -| ['compiler_generated'] )
+		    -| ['compiler_generated'] )
+		  %% Line 10
+		  ( <( _cor0
+		       -| ['compiler_generated'] )> when ( 'true'
+							   -| ['compiler_generated'] ) ->
+			%% Line 11
+			( apply ( 'behv'/0
+				  -| ['compiler_generated'] )
+			      ()
+			  -| ['compiler_generated'] )
+		    -| ['compiler_generated'] )
+		after ( 'infinity'
+			-| ['compiler_generated'] ) ->
+		  ( 'true'
+		    -| ['compiler_generated'] )
+		-| ['compiler_generated'] )
+	  %% Line 10
+	  <_cor0> when 'true' ->
+	      ( receive
+		  ( <( {( 'hoge'
+			  -| ['compiler_generated'] ),( N
+							-| ['compiler_generated'] )}
+		       -| ['compiler_generated'] )> when ( 'true'
+							   -| ['compiler_generated'] ) ->
+			( apply ( 'behv'/0
+				  -| ['compiler_generated'] )
+			      ()
+			  -| ['compiler_generated'] )
+		    -| ['compiler_generated'] )
+		  ( <( _cor0
+		       -| ['compiler_generated'] )> when ( 'true'
+							   -| ['compiler_generated'] ) ->
+			%% Line 11
+			( apply ( 'behv'/0
+				  -| ['compiler_generated'] )
+			      ()
+			  -| ['compiler_generated'] )
+		    -| ['compiler_generated'] )
+		after ( 'infinity'
+			-| ['compiler_generated'] ) ->
+		  ( 'true'
+		    -| ['compiler_generated'] )
+		-| ['compiler_generated'] )
+	after 'infinity' ->
+	  'true'
+'hoge'/1 =
+    %% Line 14
+    fun (_cor0) ->
+	let <_cor1> =
+	    %% Line 15
+	    ( fun () ->
+		  ( receive
+		      ( <( {( 'hoge'
+			      -| ['compiler_generated'] ),( N
+							    -| ['compiler_generated'] )}
+			   -| ['compiler_generated'] )> when ( 'true'
+							       -| ['compiler_generated'] ) ->
+			    ( apply ( 'behv'/0
+				      -| ['compiler_generated'] )
+				  ()
+			      -| ['compiler_generated'] )
+			-| ['compiler_generated'] )
+		      ( <_fol1> when ( 'true'
+				       -| ['compiler_generated'] ) ->
+			    ( apply ( 'behv'/0
+				      -| ['compiler_generated'] )
+				  ()
+			      -| ['compiler_generated'] )
+			-| ['compiler_generated'] )
+		    after ( 'infinity'
+			    -| ['compiler_generated'] ) ->
+		      ( 'true'
+			-| ['compiler_generated'] )
+		    -| ['compiler_generated'] )
+	      -| [{'id',{0,0,'-hoge/1-fun-0-'}}] )
+	in  %% Line 15
+	    call 'erlang':'spawn'
+		(_cor1)
+'module_info'/0 =
+    fun () ->
+	call 'erlang':'get_module_info'
+	    ('inline')
+'module_info'/1 =
+    fun (_cor0) ->
+	call 'erlang':'get_module_info'
+	    ('inline', _cor0)
+end

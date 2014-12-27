@@ -20,6 +20,8 @@ eval (App (Var n) e) = eval (App (Var n) (eval e))
 eval (App (App e1 e2) e) = eval (App (eval (App e1 e2)) e)
 eval (Abs e) = Abs e
 
+
+
 s :: Expr
 s = Abs (Abs (Abs (App (App (Var 2) (Var 0)) (App (Var 1) (Var 0)))))
 

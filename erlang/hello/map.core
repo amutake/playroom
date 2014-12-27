@@ -1,0 +1,34 @@
+module 'map' ['map'/2,
+	      'module_info'/0,
+	      'module_info'/1]
+    attributes []
+'map'/2 =
+    %% Line 4
+    fun (_cor1,_cor0) ->
+	case <_cor1,_cor0> of
+	  <_cor6,[]> when 'true' ->
+	      []
+	  %% Line 5
+	  <F,[H|T]> when 'true' ->
+	      let <_cor2> =
+		  apply F
+		      (H)
+	      in  let <_cor3> =
+		      apply 'map'/2
+			  (F, T)
+		  in  [_cor2|_cor3]
+	  ( <_cor5,_cor4> when 'true' ->
+		( primop 'match_fail'
+		      ({'function_clause',_cor5,_cor4})
+		  -| [{'function_name',{'map',2}}] )
+	    -| ['compiler_generated'] )
+	end
+'module_info'/0 =
+    fun () ->
+	call 'erlang':'get_module_info'
+	    ('map')
+'module_info'/1 =
+    fun (_cor0) ->
+	call 'erlang':'get_module_info'
+	    ('map', _cor0)
+end

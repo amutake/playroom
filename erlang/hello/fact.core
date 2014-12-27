@@ -1,0 +1,30 @@
+module 'fact' ['fact'/1,
+	       'module_info'/0,
+	       'module_info'/1]
+    attributes []
+'fact'/1 =
+    %% Line 4
+    fun (_cor0) ->
+	case _cor0 of
+	  <0> when 'true' ->
+	      1
+	  %% Line 5
+	  <N> when 'true' ->
+	      let <_cor1> =
+		  call 'erlang':'-'
+		      (N, 1)
+	      in  let <_cor2> =
+		      apply 'fact'/1
+			  (_cor1)
+		  in  call 'erlang':'*'
+			  (N, _cor2)
+	end
+'module_info'/0 =
+    fun () ->
+	call 'erlang':'get_module_info'
+	    ('fact')
+'module_info'/1 =
+    fun (_cor0) ->
+	call 'erlang':'get_module_info'
+	    ('fact', _cor0)
+end
