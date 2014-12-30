@@ -1,4 +1,5 @@
 var React = require('react');
+var { Grid, Row, Col, Input, Button } = require('react-bootstrap');
 var Markdown = require('react-remarkable');
 
 var App = React.createClass({
@@ -7,21 +8,26 @@ var App = React.createClass({
       code: ''
     };
   },
-  componentDidMount: function() {
-    setInterval(function() {
-      var code = this.refs.code.getDOMNode().value;
-      this.setState({code: code});
-    }.bind(this), 1000);
+  handleChange: function() {
+    this.setState({ code: this.refs.code.getValue() });
   },
   render: function() {
     return (
-      <div>
+      <Grid>
         <h1>Markdown Editor</h1>
-        <textarea ref='code' rows='20' style={{width: '100%'}} />
-        <Markdown source={this.state.code} />
-      </div>
+        <Row>
+          <Col xs={8} md={6}>
+            <Input type='textarea' ref='code' label='Code' onChange={this.handleChange} rows={30} />
+          </Col>
+          <Col xs={8} md={6}>
+            <Markdown source={this.state.code} />
+          </Col>
+        </Row>
+      </Grid>
     )
   }
 });
 
 React.render(<App />, document.body);
+
+require('bootstrap/dist/css/bootstrap.min.css');

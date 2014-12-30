@@ -1,0 +1,19 @@
+{
+  "name": "react-markdown-example",
+  "version": "0.0.0",
+  "homepage": "https://github.com/amutake/playroom",
+  "authors": [
+    "amutake <amutake.s@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.1"
+  }
+}
