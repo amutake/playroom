@@ -30,7 +30,7 @@ fn compile(path: &String) -> IoResult<()> {
     match Command::new("rustc").arg("-o").arg(BIN_NAME).arg(path).output() {
         Err(reason) => Err(reason),
         Ok(output) => {
-            println!("{}", String::from_utf8(output.output));
+            println!("{}", String::from_utf8(output.output).unwrap());
             Ok(())
         }
     }
@@ -40,7 +40,7 @@ fn run() -> IoResult<()> {
     match Command::new(BIN_NAME).output() {
         Err(reason) => Err(reason),
         Ok(output) => {
-            println!("{}", String::from_utf8(output.output));
+            println!("{}", String::from_utf8(output.output).unwrap());
             Ok(())
         }
     }
@@ -50,7 +50,7 @@ fn remove() -> IoResult<()> {
     match Command::new("rm").arg(BIN_NAME).output() {
         Err(reason) => Err(reason),
         Ok(output) => {
-            println!("{}", String::from_utf8(output.output));
+            println!("{}", String::from_utf8(output.output).unwrap());
             Ok(())
         }
     }
