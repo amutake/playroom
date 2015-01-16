@@ -1,0 +1,27 @@
+{
+  "name": "hello-react",
+  "version": "0.0.1",
+  "homepage": "https://github.com/amutake/playroom",
+  "authors": [
+    "amutake <amutake.s@gmail.com>"
+  ],
+  "moduleType": [
+    "es6"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "es6-promise": "~2.0.0",
+    "fetch": "~0.3.2",
+    "react": "~0.12.2"
+  },
+  "devDependencies": {
+    "fetch": "~0.3.2"
+  }
+}
