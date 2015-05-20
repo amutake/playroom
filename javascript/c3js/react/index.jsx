@@ -19,7 +19,6 @@ var Chart = React.createClass({
             };
         });
         console.log(regions);
-        this.state.chart.regions.remove();
         this.state.chart.regions(regions);
     },
     componentDidMount: function() {
