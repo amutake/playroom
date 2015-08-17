@@ -9,7 +9,7 @@ export default class App extends Component {
     dispatch: PropTypes.func.isRequired
   }
   componentWillMount() {
-    this.props.dispatch(actions.loadItems());
+    actions.loadItems(this.props.dispatch);
   }
   render() {
     const items = this.props.items.map((item) => (
