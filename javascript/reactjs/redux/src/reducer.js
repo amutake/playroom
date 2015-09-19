@@ -5,6 +5,7 @@ const initialState = {
 };
 
 export default function reducer(state = initialState, action) {
+  console.log('d');
   switch(action.type) {
   case 'SET_ITEMS':
     return {

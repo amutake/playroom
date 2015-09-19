@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
+  </head>
+  <body>
+    <form>
+      <input id="file" name="file" type="file" onchange="change()" multiple></input>
+      <input type="text" name="text"></input>
+    </form>
+    <script>
+      function change() {
+        var input = document.querySelector('input[type="file"]');
+
+        var data = new FormData();
+        data.append('file', input.files[0]);
+        data.append('user', 'hubot');
+        data.append('undef', undefined);
+
+        console.log(data);
+
+        fetch('http://localhost:5050/fetch-file.html', {
+          method: 'post',
+          body: data
+        });
+
+        var data2 = new FormData(document.querySelector('form'));
+        fetch('/fetch-file.html', {
+          method: 'post',
+          body: JSON.stringify({hoge: 1, fuga: true}),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+        });
+
+        console.log(input.files[0]);
+        console.log(input.files[0].toString());
+        superagent.post('/fetch-file.html')
+                  .attach('file', input.files[0])
+                  .field('user', 'hubot')
+                  .end();
+
+        var xhr = new XMLHttpRequest;
+        xhr.open('POST', '/fetch-file.html', true);
+        xhr.send(data);
+      }
+    </script>
+  </body>
+</html>

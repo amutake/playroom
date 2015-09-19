@@ -12,8 +12,8 @@ export default class App extends Component {
     actions.loadItems(this.props.dispatch);
   }
   render() {
-    const items = this.props.items.map((item) => (
-      <li>{item}</li>
+    const items = this.props.items.map((item, i) => (
+      <li key={i}>{item}</li>
     ));
     return (
       <div>

@@ -21,6 +21,10 @@ Qed.
 
 Goal false -> False.
 Proof.
+  case/(boolP false).
+  case=> [].
+  move: falseP.
+  case.
   case: falseP.                 (* move: falseP. case. *)
   move => //.
   move => //.
@@ -29,4 +33,5 @@ Qed.
 Goal forall P Q R, (P -> Q /\ R) -> P -> R.
 Proof.
   move => P Q R H.
-  case/H.
+  by case/H.
+Qed.

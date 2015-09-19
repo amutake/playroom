@@ -10,11 +10,12 @@ const app = express();
 
 app.use('/assets', express.static('assets'));
 
-app.use((req, res) => {
+app.get('/', (req, res) => {
   console.log(`location: ${req.path}`);
   const store = createStore(reducer);
   const rootString = React.renderToString(makeRoot(store));
   const serializedState = serialize(store.getState());
+  console.log(serializedState);
   res.send(html(rootString, serializedState));
 });
 
