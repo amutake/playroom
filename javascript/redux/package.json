@@ -1,0 +1,29 @@
+{
+  "name": "redux-example",
+  "version": "0.0.0",
+  "description": "a redux example",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "./node_modules/webpack/bin/webpack.js"
+  },
+  "author": "amutake",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.7.0",
+    "babel-core": "^6.2.1",
+    "express": "^4.13.3",
+    "history": "^1.13.1",
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3",
+    "react-redux": "^4.0.0",
+    "react-router": "^1.0.0",
+    "redux": "^3.0.4",
+    "redux-router": "^1.0.0-beta4"
+  },
+  "devDependencies": {
+    "babel-loader": "^6.2.0",
+    "eslint": "^1.10.2",
+    "webpack": "^1.12.9"
+  }
+}
